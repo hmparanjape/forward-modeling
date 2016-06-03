@@ -11,7 +11,42 @@ from hexrd import config
 
 from forward_modeling.microstructure_reader import *
 
-#from ge_processor.ge_pre_processor import *
+def generate_random_micro_data(nipt=1000):
+    '''
+    Generate a random microstructure dataset and write it to csv.
+    Useful for testing the forward modeling code
+    '''
+
+    grid_size = np.floor(nipt**(1./3.))
+    x = np.linspace(0, 1, grid_size)
+    y = np.linspace(0, 1, grid_size)
+    z = np.linspace(0, 1, grid_size)
+    xmesh, ymesh, zmesh = np.meshgrid(x, y, z)
+
+    template = "{0:12.4f},{1:12.4f},{2:12.4f},{3:>12s},{4:12.4f},{5:12.4f},{6:12.4f},{7:12.4f},{8:12.4f},{9:12.4f},{10:12.4f},{11:12.4f},{12:12.4f},{13:12.4f}"
+
+    for ii in range(len(x)):
+        for jj in range(len(y)):
+            for kk in range(len(z)):
+                quat_random = np.random.rand(1, 4)
+                quat_random = quat_random / np.linalg.norm(quat_random)
+                def_grad_random = np.random.rand(1, 6)
+                def_grad_random = def_grad_random / 1000.0
+
+                print template.format(xmesh[ii, jj, kk], 
+                                      ymesh[ii, jj, kk], 
+                                      zmesh[ii, jj, kk],
+                                      "NiTi_cubic",
+                                      quat_random[0][0],
+                                      quat_random[0][1],
+                                      quat_random[0][2],
+                                      quat_random[0][3],
+                                      (1. + def_grad_random[0][0]),
+                                      (1. + def_grad_random[0][1]),
+                                      (1. + def_grad_random[0][2]),
+                                      def_grad_random[0][3],
+                                      def_grad_random[0][4],
+                                      def_grad_random[0][5])
 
 if __name__ == '__main__':
     # Read args
@@ -38,16 +73,24 @@ if __name__ == '__main__':
     # cfg is a list. We will loop over each cfg set.
 
     for cfg in cfgs:
-    	# Initialize the GE pre-processor
-    	# gepp = GEPreProcessor(cfg=cfg, logger=logger)
-    	# Start analysis
     	logger.info('=== begin forward-modeling ===')
-    	# Load the GE2 data
-    	# gepp.load_data()
-    	# ID blobs and the local maxima
-    	# gepp.find_blobs()
 
-        ms = Microstructure(cfg, logger, 'ms-data-test.csv')
-        ms.read_csv()
-        ms.get_diffraction_angles()
+        fwd_model_mode = cfg.get('forward_modeling')['modeling_mode'].strip()
 
+        if fwd_model_mode == "datagen":
+            generate_random_micro_data()
+        elif fwd_model_mode == "fwdmodel":
+            try:
+                fwd_model_ip_filename = \
+                    cfg.get('forward_modeling')['input_file'].strip()
+            except:
+                fwd_model_ip_filename = 'ms-data-test.csv'
+
+            fwd_model_op_filename = cfg.get('forward_modeling')['output_file'].strip()
+
+            ms = Microstructure(cfg, logger, fwd_model_ip_filename)
+            ms.read_csv()
+            ms.get_diffraction_angles()
+            ms.project_angs_to_detector()
+        else:
+            logger.error('Invalid forward modeling mode: %s. Choices are datagen and fwdmodel', fwd_model_mode)
