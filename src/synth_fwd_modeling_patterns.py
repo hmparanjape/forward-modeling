@@ -8,17 +8,18 @@ import warnings
 import yaml
 
 from hexrd import config
-from hexrd.xrd import experiment as expt
+
+from forward_modeling.microstructure_reader import *
 
 #from ge_processor.ge_pre_processor import *
 
 if __name__ == '__main__':
     # Read args
     if len(sys.argv) < 2:
-        print 'USAGE: python smooth_ge_data.py config.yml'
+        print 'USAGE: python synth_fwd_modeling_patterns.py config.yml'
         sys.exit(1)
     elif sys.argv[1] == '-h' or sys.argv[1] == '--help':
-        print 'USAGE: python smooth_ge_data.py config.yml'
+        print 'USAGE: python synth_fwd_modeling_patterns.py config.yml'
         sys.exit(1)
     else:
         cfg_file = sys.argv[1]
@@ -46,23 +47,7 @@ if __name__ == '__main__':
     	# ID blobs and the local maxima
     	# gepp.find_blobs()
 
-    	ws = expt.Experiment()
-
-    	cwd = cfg.working_dir
-
-    	materials_fname = cfg.material.definitions
-    	material_name = cfg.material.active
-    	detector_fname = cfg.instrument.detector.parameters_old
-
-    	# load materials
-    	ws.loadMaterialList(os.path.join(cwd, materials_fname))
-	mat_name_list = ws.matNames
-
-	for mat_name in mat_name_list:
-    		ws.activeMaterial = mat_name #material_name
-    		logger.info("setting active material to '%s'", mat_name)
-
-    		pd = ws.activeMaterial.planeData
-
-		print pd
+        ms = Microstructure(cfg, logger, 'ms-data-test.csv')
+        ms.read_csv()
+        ms.get_diffraction_angles()
 
