@@ -140,7 +140,10 @@ class Microstructure:
             chi = 0.0
             ws.activeMaterial = mat_name_i.strip() #material_name
 
-            hkls = ws.activeMaterial.planeData.hkls.T
+            #hkls = ws.activeMaterial.planeData.hkls.T
+	    hkls = ws.activeMaterial.planeData.getSymHKLs()
+	    hkls = np.transpose(np.hstack(hkls))
+
             rmat_c = rot.rotMatOfQuat(quat_i)
             bmat = ws.activeMaterial.planeData.latVecOps['B']
             wavelength = ws.activeMaterial.planeData.wavelength

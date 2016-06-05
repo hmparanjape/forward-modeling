@@ -12,45 +12,6 @@ from hexrd import config
 from forward_modeling.fwd_modeling_from_micro import *
 from forward_modeling.microstructure_generation import *
 
-def generate_random_micro_data(nipt=1000000, output_file="ms-data-test.csv"):
-    '''
-    Generate a random microstructure dataset and write it to csv.
-    Useful for testing the forward modeling code
-    '''
-
-    grid_size = np.floor(nipt**(1./3.))
-    x = np.linspace(0, 1, grid_size)
-    y = np.linspace(0, 1, grid_size)
-    z = np.linspace(0, 1, grid_size)
-    xmesh, ymesh, zmesh = np.meshgrid(x, y, z)
-
-    template = "{0:12.4f},{1:12.4f},{2:12.4f},{3:>12s},{4:12.4f},{5:12.4f},{6:12.4f},{7:12.4f},{8:12.4f},{9:12.4f},{10:12.4f},{11:12.4f},{12:12.4f},{13:12.4f}\n"
-
-    f = open(output_file, 'w+')
-
-    for ii in range(len(x)):
-        for jj in range(len(y)):
-            for kk in range(len(z)):
-                quat_random = np.random.rand(1, 4)
-                quat_random = quat_random / np.linalg.norm(quat_random)
-                def_grad_random = np.random.rand(1, 6)
-                def_grad_random = def_grad_random / 1000.0
-
-                f.write(template.format(xmesh[ii, jj, kk], 
-                              	        ymesh[ii, jj, kk], 
-                                        zmesh[ii, jj, kk],
-                                        "NiTi_cubic",
-                                        quat_random[0][0],
-                                        quat_random[0][1],
-                                        quat_random[0][2],
-                                        quat_random[0][3],
-                                        (1. + def_grad_random[0][0]),
-                                        (1. + def_grad_random[0][1]),
-                                        (1. + def_grad_random[0][2]),
-                                        def_grad_random[0][3],
-                                        def_grad_random[0][4],
-                                        def_grad_random[0][5]))
-
 if __name__ == '__main__':
     # Read args
     if len(sys.argv) < 2:
@@ -86,8 +47,10 @@ if __name__ == '__main__':
             logger.info('=== generating synthetic microstructural data ===')
 	    logger.info('=== writing output to %s ===', fwd_model_op_file)
 
-	    generate_cubic_ideal_grains(nipt=fwd_model_nipt, output_file=fwd_model_op_file)
-            # generate_random_micro_data(nipt=fwd_model_nipt, output_file=fwd_model_op_file)
+	    generate_cubic_grain_mosaicity(nipt=fwd_model_nipt, output_file=fwd_model_op_file)
+            #generate_cubic_grain_ideal(nipt=fwd_model_nipt, output_file=fwd_model_op_file)
+            #generate_cubic_grains_random_ideal(nipt=fwd_model_nipt, output_file=fwd_model_op_file)
+
         elif fwd_model_mode == "fwdmodel":
             try:
                 fwd_model_ip_filename = \
