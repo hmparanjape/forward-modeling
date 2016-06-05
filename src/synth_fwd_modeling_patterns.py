@@ -99,5 +99,12 @@ if __name__ == '__main__':
             ms.read_csv()
             ms.get_diffraction_angles()
             ms.project_angs_to_detector(output_file=fwd_model_op_filename)
+
+	    output_ge2 = cfg.get('forward_modeling')['output_ge_name']
+	    omega_start = cfg.get('forward_modeling')['output_omega']['start']
+            omega_step = cfg.get('forward_modeling')['output_omega']['step']
+            omega_stop = cfg.get('forward_modeling')['output_omega']['stop']
+	    synth_arr = ms.write_xyo_to_ge2(output_ge2=output_ge2, omega_start=omega_start, omega_step=omega_step, omega_stop=omega_stop)
+
         else:
             logger.error('Invalid forward modeling mode: %s. Choices are datagen and fwdmodel', fwd_model_mode)

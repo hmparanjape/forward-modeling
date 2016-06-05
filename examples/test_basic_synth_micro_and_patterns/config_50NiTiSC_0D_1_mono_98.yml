@@ -46,6 +46,10 @@ forward_modeling:
   output_file_name: synth-data.out     # TXT file to which X, Y, Omega for synth spots is written for fwdmodel
   output_ge: false                     # Write GE2 data or not
   output_ge_name: ff_synth_00000.ge2   # GE2 file name
+  output_omega:                        # Omega stepping in the GE2 file for fwdmodel
+    start: 0.0
+    step: 0.1
+    stop: 360.0
 
 # GE2 pre-processing (or spot clean-up) module. Obtain spot local maxima, spot size and shape.
 pre_processing:

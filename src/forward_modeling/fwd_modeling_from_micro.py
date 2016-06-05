@@ -20,6 +20,16 @@ from hexrd.xrd import rotations as rot
 from hexrd.xrd import transforms_CAPI as xfcapi
 #--
 
+def write_ge2(filename, arr, nbytes_header=8192, pixel_type=np.uint16):
+    '''
+    Write a 3D array to a GE2 file.
+    '''
+    fid = open(filename, 'wb')
+    fid.seek(nbytes_header)
+    fid.write(arr.astype(pixel_type))
+    fid.close()
+#--
+
 def get_diffraction_angles_MP(fwd_model_input_i):
     '''
     Parallel processing worker for eta, two-th, omega calculation
@@ -59,6 +69,11 @@ class Microstructure:
         self.ms_lat_strains = []       # (N, 6) Lattice strain a X, Y, Z
         self.synth_angles = []         # Two-theta, eta, omega from virtual diffraction
         self.calc_xyo = []             # X, Y, projected on the detector and omega
+
+	# Initialize detector and reader from the experiment. Really only detector is needed.
+        pd, reader, detector = initialize_experiment(config)
+	self.detector = detector
+	self.reader = reader
 
     def read_csv(self):
         ''' 
@@ -156,8 +171,7 @@ class Microstructure:
         '''
         cfg = self.cfg
         angs = self.synth_angles
-
-        pd, reader, detector = initialize_experiment(cfg)
+	detector = self.detector
 
         calc_xyo = detector.angToXYO(angs[:, 0], angs[:, 1], angs[:, 2])
         calc_xyo = np.transpose(calc_xyo)
@@ -172,9 +186,64 @@ class Microstructure:
 
         for x, y, o in calc_xyo:
             #print template.format(x, y, o)
-	    f.write(template.format(x, y, o))
+	    f.write(template_file.format(x, y, o))
 
 	f.close()
         self.calc_xyo = calc_xyo
         return calc_xyo
+
+    def write_xyo_to_ge2(self, output_ge2=None, omega_start=None, omega_step=None, omega_stop=None):
+        '''
+	Prepare a 3D array of size OMEGAS x XSIZE x YSIZE from X, Y, omega
+	and write the data to a GE2 file.
+        '''
+	calc_xyo = self.calc_xyo
+	detector = self.detector
+
+	if output_ge2 is None:
+	    output_ge2 = 'ff_synth_00000.ge2'
+
+	if omega_start is None:
+	    omega_start = 0.0
+
+        if omega_step is None:
+            omega_start = 0.1
+
+        if omega_stop is None:
+            omega_start = 360.0 
+
+	o_dim = int(np.round((omega_stop - omega_start)/omega_step))
+	x_dim = detector.get_ncols()
+        y_dim = detector.get_nrows()
+
+	synth_array = np.zeros((o_dim, x_dim, y_dim))
+
+	for x, y, o in calc_xyo:
+
+	    if o > omega_start and o < omega_stop:
+	    	x_op = np.round(x)
+	    	y_op = np.round(y)
+	    	o_op = np.round((o - omega_start)/360.0*(omega_stop - omega_start)/omega_step)
+
+	    	if x_op < 0:
+		    x_op = 0
+	    	if x_op >= x_dim:
+		    x_op = x_dim - 1
+            	if y_op < 0:
+                    y_op = 0
+            	if y_op >= y_dim:
+                    y_op = y_dim - 1
+	    	if o_op < 0:
+		    o_op = 0
+	    	if o_op > ((omega_stop - omega_start)/omega_step):
+		    o_op = (omega_stop - omega_start)/omega_step
+		
+		synth_array[o_op][x_op][y_op] = 12000
+
+	write_ge2(output_ge2, synth_array)
+	synth_array_max = np.amax(synth_array, axis=0)
+
+
+	self.synth_array = synth_array
+	return synth_array
 #--
