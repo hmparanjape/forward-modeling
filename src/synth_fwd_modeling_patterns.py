@@ -9,7 +9,7 @@ import yaml
 
 from hexrd import config
 
-from forward_modeling.microstructure_reader import *
+from forward_modeling.fwd_modeling_from_micro import *
 
 def generate_random_micro_data(nipt=1000):
     '''
