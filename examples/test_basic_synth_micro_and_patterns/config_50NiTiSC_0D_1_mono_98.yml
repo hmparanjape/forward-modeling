@@ -35,20 +35,26 @@ instrument:
       columns: 2048
       size: [0.200, 0.200] # [row height, col width] mm
 
+# Forward modeling module: Generate synthetic microstructure data (X, Y, Z, material, orientation, strain)
+# or read microstructure data from user and synthesize simulated diffraction patterns (X, Y, Omega in TXT and GE2 files)
 forward_modeling:
-  modeling_mode: fwdmodel            # datagen OR fwdmodel. First generates random NiTi_cubic data. Second does actual forward modeling
-  input_file: ms-data-test.csv       # Input file from which X, Y, Z, material, orientation and strain info is read
-  output_file: synth-data.out        # TXT file to which X, Y, Omega for synth spots is written
-  output_ge: false                   # Write GE2 data or not
-  output_ge_file: ff_synth_00000.ge2 # GE2 file name
+  modeling_mode: fwdmodel              # datagen OR fwdmodel. datagen generates random NiTi_cubic data. fwdmodel does actual fwd modeling
+  datagen:
+    number_of_points: 1000000          # Number of microstructure points to generate (1000 is fast, 1M is 10 minutes)
+    output_file_name: ms-data-test.csv # Output file name for syntheric microstructural data generated 
+  input_file_name: ms-data-test.csv    # Input file from which X, Y, Z, material, orientation and strain info is read for fwdmodel
+  output_file_name: synth-data.out     # TXT file to which X, Y, Omega for synth spots is written for fwdmodel
+  output_ge: false                     # Write GE2 data or not
+  output_ge_name: ff_synth_00000.ge2   # GE2 file name
 
+# GE2 pre-processing (or spot clean-up) module. Obtain spot local maxima, spot size and shape.
 pre_processing:
-  ge_reader_threshold: 50  # Anything less than this will be set to zero on reading GE2 file
-  min_blob_size: 125       # Blob containing less than these pixels will be discarded
-  min_peak_separation: 5   # Minimum separation between local maxima
-  print_spots_info: true   # Print omega, x, y and intensity for the local maxima found
-  print_ge: true           # If true, GE2 files will be written to disk (pretty slow for now)
-  print_diag_images: false # Print diagnostic PNGs with local maxima overlaid on intensity etc
+  ge_reader_threshold: 50        # Anything less than this will be set to zero on reading GE2 file
+  min_blob_size: 125             # Blob containing less than these pixels will be discarded
+  min_peak_separation: 5         # Minimum separation between local maxima
+  print_spots_info: true         # Print omega, x, y and intensity for the local maxima found
+  print_ge: true                 # If true, GE2 files will be written to disk (pretty slow for now)
+  print_diag_images: false       # Print diagnostic PNGs with local maxima overlaid on intensity etc
   radius_gray_dilation_omega: 1  # When writing GE2 files, spot will be dilated by these pixels in omega
   radius_gray_dilation_x: 4      # When writing GE2 files, spot will be dilated by these pixels in x 
   radius_gray_dilation_y: 8      # When writing GE2 files, spot will be dilated by these pixels in y

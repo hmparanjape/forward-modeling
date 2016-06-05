@@ -150,7 +150,7 @@ class Microstructure:
         self.synth_angles = synth_angles
         return synth_angles
 
-    def project_angs_to_detector(self):
+    def project_angs_to_detector(self, output_file=None):
         '''
         Project two-theta, eta, omega angle to detector X, Y, omega
         '''
@@ -163,9 +163,18 @@ class Microstructure:
         calc_xyo = np.transpose(calc_xyo)
         
         template = "{0:12.2f}{1:12.2f}{2:12.2f}"
-        for x, y, o in calc_xyo:
-            print template.format(x, y, o)
+        template_file = "{0:12.2f}{1:12.2f}{2:12.2f}\n"
 
+        if output_file is not None:
+	    f = open(output_file, 'w+')
+	else:
+	    f = open("synth_data.out", 'w+')
+
+        for x, y, o in calc_xyo:
+            #print template.format(x, y, o)
+	    f.write(template.format(x, y, o))
+
+	f.close()
         self.calc_xyo = calc_xyo
         return calc_xyo
 #--
