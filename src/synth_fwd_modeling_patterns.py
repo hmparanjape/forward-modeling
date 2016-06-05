@@ -10,6 +10,7 @@ import yaml
 from hexrd import config
 
 from forward_modeling.fwd_modeling_from_micro import *
+from forward_modeling.microstructure_generation import *
 
 def generate_random_micro_data(nipt=1000000, output_file="ms-data-test.csv"):
     '''
@@ -85,7 +86,8 @@ if __name__ == '__main__':
             logger.info('=== generating synthetic microstructural data ===')
 	    logger.info('=== writing output to %s ===', fwd_model_op_file)
 
-            generate_random_micro_data(nipt=fwd_model_nipt, output_file=fwd_model_op_file)
+	    generate_cubic_ideal_grains(nipt=fwd_model_nipt, output_file=fwd_model_op_file)
+            # generate_random_micro_data(nipt=fwd_model_nipt, output_file=fwd_model_op_file)
         elif fwd_model_mode == "fwdmodel":
             try:
                 fwd_model_ip_filename = \
