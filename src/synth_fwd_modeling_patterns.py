@@ -69,7 +69,7 @@ if __name__ == '__main__':
 	    omega_start = cfg.get('forward_modeling')['output_omega']['start']
             omega_step = cfg.get('forward_modeling')['output_omega']['step']
             omega_stop = cfg.get('forward_modeling')['output_omega']['stop']
-	    synth_arr = ms.write_xyo_to_ge2(output_ge2=output_ge2, omega_start=omega_start, omega_step=omega_step, omega_stop=omega_stop)
+	    ms.write_xyo_to_ge2(output_ge2=output_ge2, omega_start=omega_start, omega_step=omega_step, omega_stop=omega_stop)
 
         else:
             logger.error('Invalid forward modeling mode: %s. Choices are datagen and fwdmodel', fwd_model_mode)

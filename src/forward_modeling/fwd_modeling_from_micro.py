@@ -109,6 +109,7 @@ class Microstructure:
     def get_diffraction_angles(self):
         cfg = self.cfg
         logger = self.logger
+	detector = self.detector
 
         # Number of cores for multiprocessing
         num_cores = cfg.multiprocessing
@@ -135,19 +136,23 @@ class Microstructure:
                                                        self.ms_quaternions,
                                                        self.ms_lat_defgrads):
 
-            # Need t oread chi tilt from somewhere 
-            # (old detector or start using YAML detector config?)
-            chi = 0.0
+	    # Set chi tilt
+            if detector.chiTilt is not None:
+		chi = detector.chiTilt
+	    else:
+	        chi = 0.0
+
+	    # Obtain all symmetric hkls for the material
             ws.activeMaterial = mat_name_i.strip() #material_name
 
-            #hkls = ws.activeMaterial.planeData.hkls.T
 	    hkls = ws.activeMaterial.planeData.getSymHKLs()
 	    hkls = np.transpose(np.hstack(hkls))
-
+	    # Rotational matrix from the orientation/quaternion
             rmat_c = rot.rotMatOfQuat(quat_i)
+	    # bmat
             bmat = ws.activeMaterial.planeData.latVecOps['B']
             wavelength = ws.activeMaterial.planeData.wavelength
-
+	    # Create a dictionary of inputs to be sent to the MP worker
             fwd_model_input.append(
                 {
                     'chi': chi,
@@ -175,10 +180,10 @@ class Microstructure:
         cfg = self.cfg
         angs = self.synth_angles
 	detector = self.detector
-
+	# Obtain X, Y from two-theta, eta
         calc_xyo = detector.angToXYO(angs[:, 0], angs[:, 1], angs[:, 2])
         calc_xyo = np.transpose(calc_xyo)
-        
+        # Write X, Y, omega sata to a text file
         template = "{0:12.2f}{1:12.2f}{2:12.2f}"
         template_file = "{0:12.2f}{1:12.2f}{2:12.2f}\n"
 
@@ -202,7 +207,7 @@ class Microstructure:
         '''
 	calc_xyo = self.calc_xyo
 	detector = self.detector
-
+	# Get X, Y, omega dimensions to create a 3D array
 	if output_ge2 is None:
 	    output_ge2 = 'ff_synth_00000.ge2'
 
@@ -218,16 +223,16 @@ class Microstructure:
 	o_dim = int(np.round((omega_stop - omega_start)/omega_step))
 	x_dim = detector.get_ncols()
         y_dim = detector.get_nrows()
-
+	# Create an empty array of appropriate size
 	synth_array = np.zeros((o_dim, x_dim, y_dim))
-
+	# Fill in intensity details at appropriate X, Y, ome positions
 	for x, y, o in calc_xyo:
 
 	    if o > omega_start and o < omega_stop:
 	    	x_op = np.round(x)
 	    	y_op = np.round(y)
 	    	o_op = np.round((o - omega_start)/360.0*(omega_stop - omega_start)/omega_step)
-
+		# CHeck for sane indices
 	    	if x_op < 0:
 		    x_op = 0
 	    	if x_op >= x_dim:
@@ -240,10 +245,13 @@ class Microstructure:
 		    o_op = 0
 	    	if o_op > ((omega_stop - omega_start)/omega_step):
 		    o_op = (omega_stop - omega_start)/omega_step
-		
+		# For now we are not calculating structure factor and realistic intensities for spots.
+		# Can we use heXRD crystallography functions? May be. Need to find a way of getting atom positions.
+		# Read in CIFs? haha fu*k no..
 		synth_array[o_op][x_op][y_op] = 12000
-
+	# Write the array to a GE2
 	write_ge2(output_ge2, synth_array)
+	# Also write a max-over frame for now.
 	synth_array_max = np.amax(synth_array, axis=0)
 	output_ge2_max = output_ge2.rsplit('.', 1)[0]
 	write_ge2(output_ge2_max + '-max.ge2', synth_array_max)
